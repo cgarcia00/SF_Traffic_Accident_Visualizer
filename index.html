@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>
+      How Income, Crime, and Other Factors Affect Traffic Accidents in SF
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Google Fonts-->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Georgia:wght@400;700&family=Helvetica:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- d3 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+      body {
+        font-family: "Georgia", serif;
+        margin: 0;
+        padding: 0;
+        color: #333;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      header {
+        text-align: center;
+        padding: 50px 20px;
+      }
+      header h1 {
+        font-size: 3em;
+        margin-bottom: 0.2em;
+        font-weight: normal;
+      }
+      .intro {
+        font-size: 1.2em;
+        margin-bottom: 2em;
+        text-align: center;
+        color: #666;
+      }
+      .visualization {
+        margin-bottom: 3em;
+      }
+      .visualization h2 {
+        font-size: 2em;
+        margin-bottom: 0.5em;
+        font-family: "Georgia", serif;
+        font-weight: normal;
+      }
+      .visualization p {
+        font-size: 1em;
+        margin-bottom: 1em;
+        color: #444;
+        font-family: "Helvetica", sans-serif;
+      }
+      .caption {
+        font-size: 0.9em;
+        color: #999;
+        margin-top: 0.5em;
+        margin-bottom: 2em;
+        font-family: "Helvetica", sans-serif;
+      }
+      .viz-placeholder {
+        width: 100%;
+        height: 400px;
+        background-color: #eaeaea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #aaa;
+        font-size: 1.5em;
+        border: 1px solid #ccc;
+      }
+
+      #map {
+        width: 100%;
+        height: 400px;
+        border: 1px solid #ccc;
+      }
+
+      #map2 {
+        width: 100%;
+        height: 400px;
+        border: 1px solid #ccc;
+      }
+
+      footer {
+        text-align: center;
+        padding: 20px;
+        color: #aaa;
+        font-size: 0.9em;
+      }
+
+      .slider2-container {
+        position: relative;
+        background-color: white;
+        padding: 10px;
+        border-radius: 5px;
+        max-width: 300px;
+        margin-top: 10px;
+        font-family: "Helvetica", sans-serif;
+      }
+      .slider2-container h3 {
+        margin: 0 0 10px;
+        font-size: 1.2em;
+        font-family: "Georgia", serif;
+        font-weight: normal;
+      }
+      .slider2-container label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+      .slider2-container input[type="range"] {
+        width: 100%;
+      }
+      .slider2-container .slider-value {
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 0.9em;
+        color: #333;
+      }
+
+      .chart-container {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+      }
+      .chart-container .buttons {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .chart-container .buttons button {
+        margin: 0 5px;
+        padding: 8px 12px;
+        font-size: 14px;
+        font-family: "Helvetica", sans-serif;
+        background: #f7f7f7;
+        border: 1px solid #ccc;
+        cursor: pointer;
+      }
+      .chart-container .buttons button:hover {
+        background: #eee;
+      }
+      .chart-container .buttons button.active {
+        background: #333;
+        color: #fff;
+        border: none;
+      }
+      .tooltip {
+        position: absolute;
+        text-align: center;
+        padding: 6px;
+        font: 12px sans-serif;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        pointer-events: none;
+        opacity: 0;
+        color: #333;
+      }
+      .bar {
+        fill: steelblue;
+      }
+      .bar:hover {
+        fill: darkorange;
+      }
+      .axis text {
+        font-size: 12px;
+        font-family: "Helvetica", sans-serif;
+      }
+      .axis path,
+      .axis line {
+        stroke: #000;
+      }
+      .x.label,
+      .y.label {
+        font-family: "Helvetica", sans-serif;
+        font-size: 14px;
+        fill: #333;
+      }
+
+      #comparisonChart {
+        width: 100%;
+        height: 400px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Article Header -->
+      <header>
+        <h1>
+          How Income, Crime, and Other Factors Affect Traffic Accidents in San
+          Francisco
+        </h1>
+        <div class="intro">By Cristobal Garcia</div>
+      </header>
+
+      <!-- Visualization 1: Integrated Map -->
+      <section class="visualization">
+        <h2>Crime and Traffic Location Correlation</h2>
+        <p>
+          The visualization overlays multiple data layers on a map of San
+          Francisco: traffic accidents as red data points and a crime heatmap.
+          By examining these layers in conjunction, we can attempt to discern
+          patterns and potential causal relationships among crime rates and
+          traffic safety.
+        </p>
+        <div id="map"></div>
+        <div class="caption">
+          Figure 1: Crime and Traffic accident data in SF from 2024.
+        </div>
+        <h3>Geospatial Patterns of Traffic Accidents and Crime</h3>
+        <p>
+          Concentrations of accidents appear to correlate with high-traffic
+          corridors and bustling commercial areas. Notably, the northeast
+          quadrant of neighborhoods like the Financial District, Chinatown, and
+          parts of Downtown shows a dense cluster of both accidents and reported
+          crimes. This correlation could be influenced by a combination of
+          higher population density, greater volumes of pedestrian and vehicular
+          traffic, and the presence of nightlife venues. Busy main streets such
+          as Market Street and major intersections around Union Square and SoMa
+          may serve as magnets for collisions due to higher congestion, frequent
+          pedestrian crossing, and the complex movements of cars, cyclists, and
+          scooters. In contrast, residential areas toward the western side of
+          the city have comparatively fewer accidents. These neighborhoods tend
+          to have more uniform street grids, lower traffic speeds, and fewer
+          large commercial hubs, reducing the likelihood of collisions. Crime
+          densities in these neighborhoods also appear lower on the map,
+          suggesting that lower density and quieter streets may create both
+          safer driving conditions and less opportunity for certain types of
+          crime.
+        </p>
+        <h3>The Crime-Accident Socioeconomic Relationship</h3>
+        <p>
+          While the presence of crime does not directly cause traffic accidents,
+          the correlation suggested by the heatmap may reveal that both are
+          symptomatic of underlying environmental and socioeconomic conditions.
+          For instance, areas with significant social challenges—higher crime,
+          concentrated poverty, and fewer resources—tend to have less
+          well-maintained public infrastructure. Over time, inadequate
+          infrastructure investment can create more hazardous streets.
+          Furthermore, higher crime rates can indicate neighborhoods with more
+          transient populations, nightlife, or economic hardships conditions
+          that potentially contribute to more chaotic street environments.
+          Distracted driving, impaired driving, or people more frequently
+          driving through unfamiliar neighborhoods can all increase the risk of
+          accidents. Though the visualization cannot establish direct causation,
+          it does highlight that some neighborhoods face overlapping challenges
+          that include both personal safety and traffic safety.
+        </p>
+        <h3>Possible Policy Solutions</h3>
+        <p>
+          Safe street design upgrades such as protected bike lanes, improved
+          crosswalks with better signage, traffic calming measures, and
+          dedicated bus lanes can reduce collisions and improve the pedestrian
+          experience, particularly in low income areas. Additionally, working
+          with local communities to identify dangerous intersections, holding
+          traffic safety workshops, and engaging in community policing efforts
+          may help curb both crime and reckless driving.
+        </p>
+      </section>
+
+      <!-- Visualization 2: Second Map & Sliders -->
+      <section class="visualization">
+        <h2>Income Impacts on Accident Injuries and Fatalities</h2>
+        <p>
+          The map below allows you to filter ZIP codes by median income, total
+          accidents, fatality rates, and average injured people. By adjusting
+          these filters, patterns in which high-income areas often have slightly
+          fewer severe accidents may become evident.
+        </p>
+        <div id="map2"></div>
+        <div class="slider2-container">
+          <h3>Filter ZIP Codes</h3>
+          <label>Max Median Income ($):</label>
+          <div class="slider-value" id="incomeValue2"></div>
+          <input
+            type="range"
+            id="incomeSlider2"
+            min="40000"
+            max="250000"
+            step="1000"
+            value="250000"
+          />
+
+          <label>Max Total Accidents:</label>
+          <div class="slider-value" id="accidentsValue2"></div>
+          <input
+            type="range"
+            id="accidentsSlider2"
+            min="0"
+            max="8000"
+            step="10"
+            value="8000"
+          />
+
+          <label>Max Fatality Rate (%):</label>
+          <div class="slider-value" id="fatalityRateValue2"></div>
+          <input
+            type="range"
+            id="fatalityRateSlider2"
+            min="0"
+            max="5"
+            step="0.1"
+            value="5"
+          />
+
+          <label>Max Avg. Injured People:</label>
+          <div class="slider-value" id="avgInjuredValue2"></div>
+          <input
+            type="range"
+            id="avgInjuredSlider2"
+            min="0"
+            max="5"
+            step="0.1"
+            value="5"
+          />
+        </div>
+        <div class="caption">
+          Figure 2: SF traffic accident statistics averaged from 2018-2024 for
+          zip codes with income data from 2024.
+        </div>
+      </section>
+
+      <!-- Visualization 3: Top 5 Bottom 5 Comparison -->
+      <section class="visualization">
+        <h3>Comparing Injury and Fatality Rates by Income Group</h3>
+        <p>
+          The bar chart below compares the top 5 high income ZIP codes to the
+          bottom 5 low income ZIP codes in San Francisco. The top 5 wealthiest
+          areas have an average of 1.26 people injured per accident with a 0.8%
+          fatality rate, while the bottom 5 poorest ZIP codes show an average of
+          1.28 people injured and a 1.3% fatality rate. Although the differences
+          are subtle, they highlight that lower-income areas face slightly worse
+          outcomes in terms of fatalities.
+        </p>
+        <div id="comparisonChart"></div>
+        <div class="caption">
+          Figure 3: Comparison of average injuries and fatality rates between
+          top 5 and bottom 5 income ZIP code groups.
+        </div>
+
+        <h3>The Relationship Between Income and Accidents</h3>
+        <p>
+          There are several possible reasons for these disparities San
+          Francisco's ZIP codes vary widely in terms of median household income.
+          In general, the city's higher-income areas can be found in
+          neighborhoods like Pacific Heights, Presidio Heights, and parts of the
+          Marina. These upscale neighborhoods often have well-maintained
+          infrastructure, calmer traffic patterns, and more robust safety
+          measures, potentially leading to fewer severe traffic incidents.
+          Pedestrian-friendly street design, traffic calming measures (such as
+          speed humps or protected bike lanes), and active neighborhood
+          associations advocating for safer streets may all contribute to fewer
+          accidents. On the other hand, neighborhoods with historically lower
+          median incomes—such as portions of the Tenderloin, SoMa, and
+          Bayview-Hunters Point—have historically faced challenges that
+          intersect with transportation safety. The map suggests that some of
+          these areas exhibit elevated rates of both crime and traffic
+          accidents. Although the root causes are multifaceted, several
+          plausible factors can be considered:
+        </p>
+        <ul>
+          <li>
+            Infrastructure Disparities: Lower-income neighborhoods may have
+            older road designs, less pedestrian-friendly infrastructure, and
+            fewer traffic calming investments. Poor street lighting, faded
+            crosswalks, and limited bike lanes can create environments more
+            prone to collisions.
+          </li>
+          <li>
+            Greater Reliance on Public and Non-Auto Transport: Residents in
+            lower-income areas may be more likely to walk, bike, or rely on
+            public transit. As a result, high-traffic corridors where cars,
+            buses, cyclists, and pedestrians must navigate the same space can
+            become collision hotspots.
+          </li>
+          <li>
+            Commercial and Social Activity Patterns: Certain lower-income
+            neighborhoods have dense residential populations, mixed-use zoning,
+            and a large presence of social services, shelters, and community
+            centers—factors that increase foot traffic and potential points of
+            conflict between pedestrians and vehicles.
+          </li>
+        </ul>
+        <h3>Possible Policy Solutions</h3>
+        <p>
+          Providing equitable infrastructure would be a stepping stone in
+          alivating the disparity. Ensuring that all neighborhoods regardless of
+          income receive adequate lighting, road maintenance, and pedestrian
+          amenities can level the playing field. This equity focused approach
+          can improve quality of life and reduce the incidence of collisions and
+          related injuries. Lower income areas typically lack investment and
+          ammenities of this kind. Shifting this long standing paradigm is
+          essential.
+        </p>
+      </section>
+
+      <!-- Visualization 4: Timeframe Comparison -->
+      <section class="visualization">
+        <h2>Exploring the Timeframe Patterns of Accidents</h2>
+        <p>
+          An essential dimension of understanding traffic accidents involves
+          examining their temporal distribution. By identifying the days and
+          hours when collisions are more frequent, we can gain insights into the
+          underlying conditions that increase the likelihood of an
+          incident—whether that's rush-hour congestion, weekend leisure travel,
+          or the interplay of workday commuting patterns.
+        </p>
+        <div class="chart-container">
+          <img src="../images/day.png" class="chart-image" />
+          <div class="caption">
+            Figure 4.1: What day of the week traffic accidents occured in SF
+            using data from 2018-2024.
+          </div>
+          <h3>Accidents by Day of the Week</h3>
+          <p>
+            There is a clear pattern across the seven day cycle. While traffic
+            incidents occur consistently every day, certain weekdays stand out
+            for having higher volumes of reported accidents. In particular,
+            midweek through Friday tends to show elevated levels of incidents.
+            This pattern may be linked to a combination of factors, such as
+            commuters traveling during peak working days, increased economic
+            activity centered around the Monday through Friday schedule, and
+            heightened roadway congestion during these periods. The
+            concentration of accidents on weekdays suggests that the rhythms of
+            the workweek standardized start times, lunch breaks, afternoon rush
+            hours, and possibly increased commercial deliveries play a
+            significant role in shaping traffic risk. On the other hand, while
+            weekends still see a substantial number of collisions, the total
+            counts are generally lower compared to weekdays. This could reflect
+            a relative reduction in commuter traffic and commercial activity on
+            Saturdays and Sundays. However, leisure and tourism related driving
+            during weekends, along with increased nighttime entertainment
+            traffic, may still contribute to significant numbers of incidents,
+            albeit distributed differently over the day and potentially
+            concentrated around specific neighborhoods or leisure hubs.
+          </p>
+          <img src="../images/time.png" class="chart-image" />
+          <div class="caption">
+            Figure 4.2: When traffic accidents occured in the day in SF using
+            data from 2018-2024.
+          </div>
+          <h3>Accidents by Hour of the Day</h3>
+          <p>
+            Temporal patterns on a daily scale highlight the strong influence of
+            the traditional commute structure. During the overnight and early
+            morning hours (midnight through roughly 5:00 AM), less accidents
+            occur. With less traffic and emptier streets, fewer collision
+            opportunities arise, even though those that do occur might sometimes
+            be linked to impaired driving or visibility challenges. As the
+            morning wears on, incidents start to rise sharply. The hours from
+            7:00 AM onward correspond to the height of rush hour, when many
+            individuals simultaneously hit the roads to reach workplaces or
+            schools. The volume of accidents typically reaches a plateau or
+            gently rises throughout the mid to late afternoon, culminating in a
+            peak around the later rush hour (roughly 4:00 PM to 6:00 PM). This
+            surge is reflective of increased roadway usage as people return home
+            from work, run errands, and engage in other activities. It is during
+            these late afternoon and early evening hours that traffic density,
+            driver fatigue, and the interplay of various urban activities create
+            a heightened environment for collisions. Beyond the commute windows,
+            incident counts gradually taper off into the late evening. Although
+            nighttime hours show fewer incidents overall, factors like impaired
+            driving, reduced visibility, and weekend entertainment patterns can
+            still make certain late night hours more prone to accidents than one
+            might expect based solely on traffic volume.
+          </p>
+        </div>
+      </section>
+
+      <section class="visualization">
+        <h3>Accident Distribution Across Different Timeframes</h3>
+        <p>
+          This visualization provides the timeframe filters above along with
+          filters for month and year. It provides a comphensive overview of how
+          timeframe factors impact the distribution of accidents.
+        </p>
+        <div class="chart-container">
+          <div class="buttons">
+            <button id="dayButton">Day of Week</button>
+            <button id="monthButton">Month</button>
+            <button id="yearButton">Year</button>
+            <button id="hourButton">Time of Day</button>
+          </div>
+          <svg id="barChart"></svg>
+          <div class="caption">
+            Figure 4.3: Data illustrating when traffic accidents occured based
+            on timeframes using data from 2018-2024.
+          </div>
+        </div>
+
+        <h3>Policy Implication</h3>
+        <p>
+          Understanding these timeframe patterns can inform targeted
+          interventions aimed at reducing accident risk. For example, increasing
+          traffic enforcement or safety campaigns during peak commute hours,
+          implementing intelligent traffic signal timing on high volume areas,
+          or offering incentives for staggered work schedules could potentially
+          mitigate the risk. Similarly, focusing on pedestrian and cyclist
+          safety improvements in corridors with known high afternoon and evening
+          crash rates could also prove beneficial. This data provides vital
+          clues about how human behavior, economic patterns, and the built
+          environment shape roadway safety. These insights can guide planners,
+          policymakers, and community groups as they work together to improve
+          traffic conditions and reduce traffic accident related harm in San
+          Francisco.
+        </p>
+      </section>
+
+      <h2>Conclusion</h2>
+      <p>
+        The analysis of these datasets reveals a complex interplay of factors
+        like income, crime, infrastructure, and population density that
+        collectively shape traffic safety outcomes in San Francisco. While
+        affluent neighborhoods tend to enjoy well maintained roads, effective
+        traffic calming measures, and comparatively safer travel conditions,
+        communities grappling with lower incomes and higher crime rates often
+        face infrastructural deficits that elevate both the frequency and
+        severity of accidents. As these visualizations and data points suggest,
+        addressing traffic safety in San Francisco requires more than just
+        managing vehicle flow; it demands equitable investment in road
+        improvements, community engagement, and policy interventions that
+        prioritize underserved areas. Ultimately, a holistic, data driven
+        approach to urban planning and resource allocation can help reduce
+        traffic injuries and fatalities across the city improving the quality of
+        life for all who call San Francisco home.
+      </p>
+
+      <footer>
+        © 2024 How Income, Crime, and Other Factors Affect Traffic Accidents in
+        SF
+      </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="../scripts/script.js"></script>
+    <script src="../scripts/script2.js"></script>
+    <script src="../scripts/script3.js"></script>
+
+    <!-- Script for Visualization 3 -->
+    <script>
+      // Data for the comparison: top 5 vs bottom 5 income ZIP codes
+      const comparisonData = [
+        {
+          group: "Top 5 High-Income",
+          avgInjuries: 1.26,
+          fatalityRate: 0.8,
+        },
+        {
+          group: "Bottom 5 Low-Income",
+          avgInjuries: 1.28,
+          fatalityRate: 1.3,
+        },
+      ];
+
+      const marginComp = { top: 40, right: 40, bottom: 60, left: 60 };
+      const widthComp = 600 - marginComp.left - marginComp.right;
+      const heightComp = 400 - marginComp.top - marginComp.bottom;
+
+      const svgComp = d3
+        .select("#comparisonChart")
+        .append("svg")
+        .attr("width", widthComp + marginComp.left + marginComp.right)
+        .attr("height", heightComp + marginComp.top + marginComp.bottom)
+        .append("g")
+        .attr(
+          "transform",
+          "translate(" + marginComp.left + "," + marginComp.top + ")"
+        );
+
+      const subgroups = ["avgInjuries", "fatalityRate"];
+      const groups = comparisonData.map((d) => d.group);
+
+      const x0 = d3
+        .scaleBand()
+        .domain(groups)
+        .range([0, widthComp])
+        .paddingInner(0.2);
+
+      const x1 = d3
+        .scaleBand()
+        .domain(subgroups)
+        .range([0, x0.bandwidth()])
+        .padding(0.1);
+
+      const maxVal = d3.max(comparisonData, (d) =>
+        Math.max(d.avgInjuries, d.fatalityRate)
+      );
+      const y1 = d3
+        .scaleLinear()
+        .domain([0, maxVal + 0.5])
+        .range([heightComp, 0]);
+
+      const color = d3
+        .scaleOrdinal()
+        .domain(subgroups)
+        .range(["#6baed6", "#fd8d3c"]);
+
+      svgComp
+        .append("g")
+        .attr("transform", "translate(0," + heightComp + ")")
+        .call(d3.axisBottom(x0));
+
+      svgComp.append("g").call(d3.axisLeft(y1));
+
+      svgComp
+        .append("g")
+        .selectAll("g")
+        .data(comparisonData)
+        .enter()
+        .append("g")
+        .attr("transform", (d) => "translate(" + x0(d.group) + ",0)")
+        .selectAll("rect")
+        .data(function (d) {
+          return subgroups.map((key) => {
+            return { key: key, value: d[key] };
+          });
+        })
+        .enter()
+        .append("rect")
+        .attr("x", (d) => x1(d.key))
+        .attr("y", (d) => y1(d.value))
+        .attr("width", x1.bandwidth())
+        .attr("height", (d) => heightComp - y1(d.value))
+        .attr("fill", (d) => color(d.key));
+
+      const legend = svgComp
+        .append("g")
+        .attr("transform", `translate(${widthComp - 100},10)`);
+
+      legend
+        .selectAll("rect")
+        .data(subgroups)
+        .enter()
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", (d, i) => i * 20)
+        .attr("width", 15)
+        .attr("height", 15)
+        .attr("fill", (d) => color(d));
+
+      legend
+        .selectAll("text")
+        .data(subgroups)
+        .enter()
+        .append("text")
+        .attr("x", 20)
+        .attr("y", (d, i) => i * 20 + 12)
+        .text((d) =>
+          d === "avgInjuries" ? "Avg Injuries" : "Fatality Rate (%)"
+        )
+        .attr("fill", "#333")
+        .attr("font-size", "12px");
+    </script>
+  </body>
+</html>
