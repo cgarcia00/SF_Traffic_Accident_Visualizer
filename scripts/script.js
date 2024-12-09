@@ -30,7 +30,7 @@ function accidentMarkerStyle(feature) {
   };
 }
 
-fetch("../data/accidentData.geojson")
+fetch("data/accidentData.geojson")
   .then((response) => response.json())
   .then((data) => {
     var accidentLayer = L.geoJSON(data, {
@@ -85,7 +85,7 @@ function incomeStyle(feature) {
   };
 }
 
-fetch("../data/incomeData.geojson")
+fetch("data/incomeData.geojson")
   .then((response) => response.json())
   .then((data) => {
     var incomeLayer = L.geoJSON(data, {
@@ -101,7 +101,7 @@ fetch("../data/incomeData.geojson")
     });
   });
 
-fetch("../data/crimeData.geojson")
+fetch("data/crimeData.geojson")
   .then((response) => response.json())
   .then((data) => {
     var crimePoints = data.features.map(function (feature) {

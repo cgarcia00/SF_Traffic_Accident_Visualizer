@@ -227,7 +227,7 @@ function update(data, xKey) {
     .attr("height", (d) => height - y(d.count));
 }
 
-d3.csv("../data/SF_Traffic_Data_Full.csv").then(function (data) {
+d3.csv("data/SF_Traffic_Data_Full.csv").then(function (data) {
   data.forEach((d) => {
     d.accident_year = +d.accident_year;
 

@@ -57,7 +57,7 @@ function zipCodeStyle2(feature) {
 
 var zipCodeLayer2;
 
-fetch("../data/income_accidents.geojson")
+fetch("data/income_accidents.geojson")
   .then((response) => response.json())
   .then((data) => {
     zipCodeLayer2 = L.geoJSON(data, {
